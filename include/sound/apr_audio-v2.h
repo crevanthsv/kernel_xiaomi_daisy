@@ -1,4 +1,5 @@
 /* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License version 2 and
@@ -8329,6 +8330,36 @@ struct afe_spkr_prot_calib_get_resp {
 	struct asm_calib_res_cfg res_cfg;
 } __packed;
 
+/*Maxim DSM module and parameters IDs*/
+#define AFE_RX_TOPOLOGY_ID_DSM                              0x10001061
+#define AFE_TX_TOPOLOGY_ID_DSM                              0x10001060
+#define AFE_MODULE_DSM_TX                                   0x10001068
+#define AFE_MODULE_DSM_RX                                   0x10001062
+#define AFE_PARAM_ID_DSM_ENABLE                             0x10001063
+#define AFE_PARAM_ID_CALIB                                  0x10001065
+#define AFE_PARAM_ID_DSM_CFG                                0x10001066
+#define AFE_PARAM_ID_DSM_INFO                               0x10001067
+
+#define DSM_RX_PORT_ID      AFE_PORT_ID_QUINARY_MI2S_RX
+#define DSM_TX_PORT_ID      AFE_PORT_ID_QUINARY_MI2S_TX
+
+struct afe_dsm_set_command {
+	struct apr_hdr hdr;
+	struct afe_port_cmd_set_param_v2 param;
+	struct afe_port_param_data_v2 pdata;
+} __packed;
+
+struct afe_dsm_get_command {
+	struct apr_hdr hdr;
+	struct afe_port_cmd_get_param_v2 param;
+	struct afe_port_param_data_v2 pdata;
+} __packed;
+
+struct afe_dsm_get_resp {
+	uint32_t status;
+	struct afe_port_param_data_v2 pdata;
+	uint32_t payload[0];
+} __packed;
 
 /* SRS TRUMEDIA start */
 /* topology */
@@ -8929,7 +8960,7 @@ struct afe_clk_set {
 	 * for enable and disable clock.
 	 *	"clk_freq_in_hz", "clk_attri", and "clk_root"
 	 *	are ignored in disable clock case.
-	 *	@values 
+	 *	@valuesï¿½
 	 *	- 0 -- Disabled
 	 *	- 1 -- Enabled  @tablebulletend
 	 */
