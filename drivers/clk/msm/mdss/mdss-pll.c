@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -211,9 +212,11 @@ static int mdss_pll_clock_register(struct platform_device *pdev,
 	return rc;
 }
 
+extern char *saved_command_line;
 static int mdss_pll_probe(struct platform_device *pdev)
 {
 	int rc = 0;
+	int len = 0;
 	const char *label;
 	struct resource *pll_base_reg;
 	struct resource *phy_base_reg;
@@ -249,25 +252,22 @@ static int mdss_pll_probe(struct platform_device *pdev)
 		pll_res->index = 0;
 	}
 
-	pll_res->ssc_en = of_property_read_bool(pdev->dev.of_node,
-						"qcom,dsi-pll-ssc-en");
-
-	if (pll_res->ssc_en) {
-		pr_info("%s: label=%s PLL SSC enabled\n", __func__, label);
-
-		rc = of_property_read_u32(pdev->dev.of_node,
-			"qcom,ssc-frequency-hz", &pll_res->ssc_freq);
-
-		rc = of_property_read_u32(pdev->dev.of_node,
-			"qcom,ssc-ppm", &pll_res->ssc_ppm);
-
+	len = strlen(saved_command_line);
+	if (strnstr(saved_command_line, "ili7807_fhdplus_video", len)){
+		pll_res->ssc_en = 0;
+		printk("[sunbo] panel: CDY_ili7807.\n");
+	} else if (strnstr(saved_command_line, "hx8399c_fhdplus_video", len)){
+		pll_res->ssc_en = 1;
+		pll_res->ssc_freq = 30000;
+		pll_res->ssc_ppm = 5000;
 		pll_res->ssc_center = false;
-
-		label = of_get_property(pdev->dev.of_node,
-			"qcom,dsi-pll-ssc-mode", NULL);
-
-		if (label && !strcmp(label, "center-spread"))
-			pll_res->ssc_center = true;
+		printk("[sunbo] panel: CSOT_hx8399c.\n");
+	} else if (strnstr(saved_command_line, "otm1911_fhdplus_video", len)){
+		pll_res->ssc_en = 1;
+		pll_res->ssc_freq = 30000;
+		pll_res->ssc_ppm = 5000;
+		pll_res->ssc_center = false;
+		printk("[sunbo] panel: TIANMA_otm1911.\n");
 	}
 
 	pll_base_reg = platform_get_resource_byname(pdev,
