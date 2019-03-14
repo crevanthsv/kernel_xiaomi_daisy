@@ -1,4 +1,5 @@
 /* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -322,6 +323,8 @@ struct qpnp_wled {
 	bool en_ext_pfet_sc_pro;
 	bool prev_state;
 };
+
+static int first_set_prev_state;
 
 /* helper to read a pmic register */
 static int qpnp_wled_read_reg(struct qpnp_wled *wled, u8 *data, u16 addr)
@@ -809,6 +812,12 @@ static void qpnp_wled_work(struct work_struct *work)
 			dev_err(&wled->spmi->dev, "wled set level failed\n");
 			goto unlock_mutex;
 		}
+	}
+
+	if (1 == first_set_prev_state)
+	{
+		wled->prev_state = true;
+		first_set_prev_state = 0;
 	}
 
 	if (!!level != wled->prev_state) {
@@ -1802,6 +1811,12 @@ static int qpnp_wled_probe(struct spmi_device *spmi)
 	if (rc) {
 		dev_err(&spmi->dev, "wled config failed\n");
 		return rc;
+	}
+
+	if (strnstr(saved_command_line, "androidboot.mode=ffbm-01",
+		    strlen(saved_command_line))){
+		printk("linson in ffbm mode\n");
+		first_set_prev_state = 1;
 	}
 
 	INIT_WORK(&wled->work, qpnp_wled_work);
