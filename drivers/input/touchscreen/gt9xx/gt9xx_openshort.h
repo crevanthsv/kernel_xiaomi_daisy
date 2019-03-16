@@ -1,4 +1,4 @@
-/* drivers/input/touchscreen/gt917d_openshort.h
+/* drivers/input/touchscreen/gt9xx_shorttp.h
  *
  * 2010 - 2012 Goodix Technology.
  *
@@ -18,18 +18,363 @@
  */
 
 
-#ifndef _GT917D_OPEN_SHORT_H_
-#define _GT917D_OPEN_SHORT_H_
+#ifndef _GT9XX_OPEN_SHORT_H_
+#define _GT9XX_OPEN_SHORT_H_
 
-#include "gt917d.h"
+#include "gt9xx.h"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #define MIN_DRIVER_NUM            10
 #define MAX_DRIVER_NUM            42
 #define MIN_SENSOR_NUM            5
 #define MAX_SENSOR_NUM            30
 
+
+
+
+
+
+
+
+
+
+
+
+
 #define GT9_DRV_HEAD    0x80
 #define GT9_SEN_HEAD    0x00
+
+
 
 #define _bRW_MISCTL__SRAM_BANK          0x4048
 #define _bRW_MISCTL__MEM_CD_EN          0x4049
@@ -43,14 +388,18 @@
 #define _rRW_MISCTL__BOOT_CTL_          0x5094
 #define _rRW_MISCTL__SHORT_BOOT_FLAG    0x5095
 
+
 #define GTP_REG_DSP_SHORT               0xc000
+
 #define GT9_REG_SEN_DRV_CNT             0x8062
 #define GT9_REG_CFG_BEG                 0x8047
 #define GT9_REG_KEY_VAL                 0x8093
+
 #define GT9_REG_SEN_ORD     0x80B7
 #define GT9_REG_DRV_ORD     0x80D5
 
-struct gt917d_short_info
+
+struct gt9xx_short_info
 {
     u8 master;
     u8 master_is_driver;
@@ -86,7 +435,7 @@ struct gt917d_short_info
 #define GTP_REG_DIFF_DATA           0xA160
 #define GTP_REG_REFRAW_DATA         0x9560
 
-struct gt917d_open_info
+struct gt9xx_open_info
 {
     u8 driver;
     u8 sensor;
@@ -96,4 +445,6 @@ struct gt917d_open_info
     u8 key;
 };
 
+
 #endif
+

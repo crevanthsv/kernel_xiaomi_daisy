@@ -1,4 +1,4 @@
-/* drivers/input/touchscreen/gt917d_openshort.c
+/* drivers/input/touchscreen/gt9xx_shorttp.c
  *
  * 2010 - 2012 Goodix Technology.
  *
@@ -23,7 +23,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/delay.h>
-#include "gt917d_openshort.h"
+#include "gt9xx_openshort.h"
 
 #define _BEYOND_INFO_MAX            20
 #define GTP_OPEN_SAMPLE_NUM         1
@@ -37,15 +37,15 @@ extern void gtp_reset_guitar(struct i2c_client*, s32);
 
 extern struct i2c_client *i2c_connect_client;
 
-u8  gt917d_drv_num = MAX_DRIVER_NUM;
-u8  gt917d_sen_num = MAX_SENSOR_NUM;
-u16 gt917d_pixel_cnt = MAX_DRIVER_NUM * MAX_SENSOR_NUM;
-u16 gt917d_sc_pxl_cnt = MAX_DRIVER_NUM * MAX_SENSOR_NUM;
-struct gt917d_short_info *short_sum;
+u8  gt9xx_drv_num = MAX_DRIVER_NUM;
+u8  gt9xx_sen_num = MAX_SENSOR_NUM;
+u16 gt9xx_pixel_cnt = MAX_DRIVER_NUM * MAX_SENSOR_NUM;
+u16 gt9xx_sc_pxl_cnt = MAX_DRIVER_NUM * MAX_SENSOR_NUM;
+struct gt9xx_short_info *short_sum;
 
 u8 chip_type_gt9f = 0;
 u8 have_key = 0;
-u8 gt917d_sc_drv_num;
+u8 gt9xx_sc_drv_num;
 u8 key_is_isolated;
 u8 key_iso_pos[5];
 static u8 raw_data[MAX_DRIVER_NUM*MAX_SENSOR_NUM*2+20];
@@ -55,7 +55,7 @@ static u8 refraw_data[MAX_DRIVER_NUM*MAX_SENSOR_NUM*2+20];
 struct kobject *goodix_debug_kobj;
 
 static s32 *test_rslt_buf;
-static struct gt917d_open_info *touchpad_sum;
+static struct gt9xx_open_info *touchpad_sum;
 
 #define _MIN_ERROR_NUM      (GTP_OPEN_SAMPLE_NUM * 9 / 10)
 
@@ -87,34 +87,34 @@ s32 gtp_parse_config(struct i2c_client *client)
         return FAIL;
     }
 
-    gt917d_drv_num = (config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT-GT9_REG_CFG_BEG] & 0x1F)
+    gt9xx_drv_num = (config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT-GT9_REG_CFG_BEG] & 0x1F)
                     + (config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT+1 -GT9_REG_CFG_BEG] & 0x1F);
-    gt917d_sen_num = (config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT+2-GT9_REG_CFG_BEG] & 0x0F)
+    gt9xx_sen_num = (config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT+2-GT9_REG_CFG_BEG] & 0x0F)
                     + ((config[GTP_ADDR_LENGTH + GT9_REG_SEN_DRV_CNT+2-GT9_REG_CFG_BEG]>>4) & 0x0F);
 
-    GTP_DEBUG("Driver num: %d, Sensor Num: %d", gt917d_drv_num, gt917d_sen_num);
-    if (gt917d_drv_num < MIN_DRIVER_NUM || gt917d_drv_num > MAX_DRIVER_NUM)
+    GTP_DEBUG("Driver num: %d, Sensor Num: %d", gt9xx_drv_num, gt9xx_sen_num);
+    if (gt9xx_drv_num < MIN_DRIVER_NUM || gt9xx_drv_num > MAX_DRIVER_NUM)
     {
         GTP_DEBUG("driver number error!");
         return FAIL;
     }
-    if (gt917d_sen_num < MIN_SENSOR_NUM || gt917d_sen_num > MAX_SENSOR_NUM)
+    if (gt9xx_sen_num < MIN_SENSOR_NUM || gt9xx_sen_num > MAX_SENSOR_NUM)
     {
         GTP_DEBUG("sensor number error!");
         return FAIL;
     }
-    gt917d_sc_pxl_cnt = gt917d_pixel_cnt = gt917d_drv_num * gt917d_sen_num;
+    gt9xx_sc_pxl_cnt = gt9xx_pixel_cnt = gt9xx_drv_num * gt9xx_sen_num;
 
     gtp_i2c_read(client, type_buf, 12);
     if (!memcmp(&type_buf[2], "GOODIX_GT9", 10))
     {
         chip_type_gt9f = 0;
-        GTP_DEBUG("Chip type: GT917D");
+        GTP_DEBUG("Chip type: GT9XX");
     }
     else
     {
         chip_type_gt9f = 1;
-        GTP_DEBUG("Chip type: GT917DF");
+        GTP_DEBUG("Chip type: GT9XXF");
     }
 
     have_key = config[0x804E - GT9_REG_CFG_BEG + GTP_ADDR_LENGTH] & 0x01;
@@ -125,7 +125,7 @@ s32 gtp_parse_config(struct i2c_client *client)
         return SUCCESS;
     }
     GTP_DEBUG("Have Key");
-    gt917d_sc_drv_num = gt917d_drv_num - 1;
+    gt9xx_sc_drv_num = gt9xx_drv_num - 1;
 
     for (i = 0; i < 5; ++i)
     {
@@ -157,8 +157,8 @@ s32 gtp_parse_config(struct i2c_client *client)
         }
     }
 
-    gt917d_sc_pxl_cnt = gt917d_pixel_cnt - (gt917d_drv_num-gt917d_sc_drv_num) * gt917d_sen_num;
-    GTP_DEBUG("drv num: %d, sen num: %d, sc drv num: %d", gt917d_drv_num, gt917d_sen_num, gt917d_sc_drv_num);
+    gt9xx_sc_pxl_cnt = gt9xx_pixel_cnt - (gt9xx_drv_num-gt9xx_sc_drv_num) * gt9xx_sen_num;
+    GTP_DEBUG("drv num: %d, sen num: %d, sc drv num: %d", gt9xx_drv_num, gt9xx_sen_num, gt9xx_sc_drv_num);
     if (key_is_isolated)
     {
         GTP_DEBUG("Isolated [%d key(s)]: %d, %d, %d, %d", key_iso_pos[0], key_iso_pos[1], key_iso_pos[2], key_iso_pos[3], key_iso_pos[4]);
@@ -233,7 +233,7 @@ s32 gtp_read_diffdata(struct i2c_client *client, u16 *data)
     u8 tail, head;
     u8 temp[20];
 
-    read_diffbuf = (u8*)kmalloc(sizeof(u8) * (gt917d_drv_num*gt917d_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
+    read_diffbuf = (u8*)kmalloc(sizeof(u8) * (gt9xx_drv_num*gt9xx_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
 
     if (NULL == read_diffbuf)
     {
@@ -288,7 +288,7 @@ s32 gtp_read_diffdata(struct i2c_client *client, u16 *data)
         read_diffbuf[1] = (u8)(GTP_REG_DIFF_DATA);
     }
 
-    ret = gtp_i2c_read(client, read_diffbuf, GTP_ADDR_LENGTH + ((gt917d_drv_num*gt917d_sen_num)*2));
+    ret = gtp_i2c_read(client, read_diffbuf, GTP_ADDR_LENGTH + ((gt9xx_drv_num*gt9xx_sen_num)*2));
     if (ret <= 0)
     {
         GTP_DEBUG("i2c read rawdata failed.");
@@ -312,12 +312,12 @@ s32 gtp_read_diffdata(struct i2c_client *client, u16 *data)
 
     GTP_DEBUG("---read diff data-----\n");
 
-    sprintf(temp, "tx: %d\n", gt917d_drv_num);
+    sprintf(temp, "tx: %d\n", gt9xx_drv_num);
     sprintf(diff_data,temp);
-    sprintf(temp, "rx: %d\n", gt917d_sen_num);
+    sprintf(temp, "rx: %d\n", gt9xx_sen_num);
     strcat(diff_data,temp);
 
-    for (i = 0,j = 0; i < ((gt917d_drv_num*gt917d_sen_num)*2); i+=2)
+    for (i = 0,j = 0; i < ((gt9xx_drv_num*gt9xx_sen_num)*2); i+=2)
     {
         data[i/2] = (u16)(read_diffbuf[i+head+GTP_ADDR_LENGTH]<<8) + (u16)read_diffbuf[GTP_ADDR_LENGTH+i+tail];
         sprintf(temp, "%-5d ", (short)data[i/2]);
@@ -357,7 +357,7 @@ s32 gtp_read_rawdata(struct i2c_client *client, u16 *data)
     u8 tail, head;
     u8 temp[20];
 
-    read_rawbuf = (u8*)kmalloc(sizeof(u8) * (gt917d_drv_num*gt917d_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
+    read_rawbuf = (u8*)kmalloc(sizeof(u8) * (gt9xx_drv_num*gt9xx_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
 
     if (NULL == read_rawbuf)
     {
@@ -412,7 +412,7 @@ s32 gtp_read_rawdata(struct i2c_client *client, u16 *data)
         read_rawbuf[1] = (u8)(GTP_REG_RAW_DATA);
     }
 
-    ret = gtp_i2c_read(client, read_rawbuf, GTP_ADDR_LENGTH + ((gt917d_drv_num*gt917d_sen_num)*2));
+    ret = gtp_i2c_read(client, read_rawbuf, GTP_ADDR_LENGTH + ((gt9xx_drv_num*gt9xx_sen_num)*2));
     if (ret <= 0)
     {
         GTP_DEBUG("i2c read rawdata failed.");
@@ -435,12 +435,12 @@ s32 gtp_read_rawdata(struct i2c_client *client, u16 *data)
 
     GTP_DEBUG("---read raw data-----\n");
 
-    sprintf(temp, "tx: %d\n", gt917d_drv_num);
+    sprintf(temp, "tx: %d\n", gt9xx_drv_num);
     sprintf(raw_data,temp);
-    sprintf(temp, "rx: %d\n", gt917d_sen_num);
+    sprintf(temp, "rx: %d\n", gt9xx_sen_num);
     strcat(raw_data,temp);
 
-    for (i = 0,j = 0; i < ((gt917d_drv_num*gt917d_sen_num)*2); i+=2)
+    for (i = 0,j = 0; i < ((gt9xx_drv_num*gt9xx_sen_num)*2); i+=2)
     {
         data[i/2] = (u16)(read_rawbuf[i+head+GTP_ADDR_LENGTH]<<8) + (u16)read_rawbuf[GTP_ADDR_LENGTH+i+tail];
     #if 1
@@ -471,7 +471,7 @@ s32 gtp_read_refrawdata(struct i2c_client *client, u16 *data)
     u8 tail, head;
     u8 temp[20];
 
-    read_rawbuf = (u8*)kmalloc(sizeof(u8) * (gt917d_drv_num*gt917d_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
+    read_rawbuf = (u8*)kmalloc(sizeof(u8) * (gt9xx_drv_num*gt9xx_sen_num * 2 + GTP_ADDR_LENGTH), GFP_KERNEL);
 
     if (NULL == read_rawbuf)
     {
@@ -526,9 +526,9 @@ s32 gtp_read_refrawdata(struct i2c_client *client, u16 *data)
         read_rawbuf[1] = (u8)(GTP_REG_REFRAW_DATA);
     }
 
-    ret = gtp_i2c_read(client, read_rawbuf, GTP_ADDR_LENGTH + ((gt917d_drv_num*gt917d_sen_num)*2));
+    ret = gtp_i2c_read(client, read_rawbuf, GTP_ADDR_LENGTH + ((gt9xx_drv_num*gt9xx_sen_num)*2));
     GTP_DEBUG("%x-%x:\n", read_rawbuf[i],read_rawbuf[i+1]);
-    for (i = 0,j = 0; i < ((gt917d_drv_num*gt917d_sen_num)*2); i+=2)
+    for (i = 0,j = 0; i < ((gt9xx_drv_num*gt9xx_sen_num)*2); i+=2)
     {
         GTP_DEBUG("%d-%d   ", read_rawbuf[i+2],read_rawbuf[i+3]);
         ++j;
@@ -557,12 +557,12 @@ s32 gtp_read_refrawdata(struct i2c_client *client, u16 *data)
 
     GTP_DEBUG("---read refraw data-----\n");
 
-    sprintf(temp, "tx: %d\n", gt917d_drv_num);
+    sprintf(temp, "tx: %d\n", gt9xx_drv_num);
     sprintf(refraw_data,temp);
-    sprintf(temp, "rx: %d\n", gt917d_sen_num);
+    sprintf(temp, "rx: %d\n", gt9xx_sen_num);
     strcat(refraw_data,temp);
 
-    for (i = 0,j = 0; i < ((gt917d_drv_num*gt917d_sen_num)*2); i+=2)
+    for (i = 0,j = 0; i < ((gt9xx_drv_num*gt9xx_sen_num)*2); i+=2)
     {
         data[i/2] = (u16)(read_rawbuf[i+head+GTP_ADDR_LENGTH]<<8) + (u16)read_rawbuf[GTP_ADDR_LENGTH+i+tail];
     #if 1
@@ -596,12 +596,12 @@ static s32 gtp_raw_test_init(void)
     u16 i = 0;
 
     test_rslt_buf = (s32*) kmalloc(sizeof(s32)*GTP_OPEN_SAMPLE_NUM, GFP_ATOMIC);
-    touchpad_sum = (struct gt917d_open_info*) kmalloc(sizeof(struct gt917d_open_info) * (4 * _BEYOND_INFO_MAX + 1), GFP_ATOMIC);
+    touchpad_sum = (struct gt9xx_open_info*) kmalloc(sizeof(struct gt9xx_open_info) * (4 * _BEYOND_INFO_MAX + 1), GFP_ATOMIC);
     if (NULL == test_rslt_buf || NULL == touchpad_sum)
     {
         return FAIL;
     }
-    memset(touchpad_sum, 0, sizeof(struct gt917d_open_info) * (4 * _BEYOND_INFO_MAX + 1));
+    memset(touchpad_sum, 0, sizeof(struct gt9xx_open_info) * (4 * _BEYOND_INFO_MAX + 1));
 
     for (i = 0; i < (4 * _BEYOND_INFO_MAX); ++i)
     {
@@ -656,7 +656,7 @@ static int hq_tp_data_dump_proc_open(struct inode *inode, struct file *file) {
         ret = FAIL;
         goto open_test_exit;
     }
-    raw_buf = (u16*)kmalloc(sizeof(u16)* (gt917d_drv_num*gt917d_sen_num), GFP_KERNEL);
+    raw_buf = (u16*)kmalloc(sizeof(u16)* (gt9xx_drv_num*gt9xx_sen_num), GFP_KERNEL);
     if (NULL == raw_buf)
     {
         GTP_DEBUG("failed to allocate mem for raw_buf!");
@@ -774,7 +774,7 @@ static int tp_data_dump_proc_open(struct inode *inode, struct file *file) {
         ret = FAIL;
         goto open_test_exit;
     }
-    raw_buf = (short*)kmalloc(sizeof(short)* (gt917d_drv_num*gt917d_sen_num), GFP_KERNEL);
+    raw_buf = (short*)kmalloc(sizeof(short)* (gt9xx_drv_num*gt9xx_sen_num), GFP_KERNEL);
     if (NULL == raw_buf)
     {
         GTP_DEBUG("failed to allocate mem for raw_buf!");
