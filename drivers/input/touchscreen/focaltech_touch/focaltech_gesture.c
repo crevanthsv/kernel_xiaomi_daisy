@@ -120,12 +120,12 @@ static ssize_t fts_gesture_buf_store(struct device *dev,
  *   write example:echo 01 > fts_gesture_mode   ---write gesture mode to 01
  *
  */
-static DEVICE_ATTR(fts_gesture_mode, S_IRUGO|S_IWUSR,
+static DEVICE_ATTR(fts_gesture_mode, 0644,
 		fts_gesture_show, fts_gesture_store);
 /*
  *   read example: cat fts_gesture_buf        ---read gesture buf
  */
-static DEVICE_ATTR(fts_gesture_buf, S_IRUGO|S_IWUSR,
+static DEVICE_ATTR(fts_gesture_buf, 0644,
 		fts_gesture_buf_show, fts_gesture_buf_store);
 static struct attribute *fts_gesture_mode_attrs[] = {
 
@@ -284,7 +284,7 @@ static void fts_gesture_report(struct input_dev *input_dev, int gesture_id)
 		gesture = KEY_GESTURE_DOWN;
 		break;
 	case GESTURE_DOUBLECLICK:
-		gesture = KEY_GESTURE_U;
+		gesture = KEY_POWER;
 		break;
 	case GESTURE_O:
 		gesture = KEY_GESTURE_O;
