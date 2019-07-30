@@ -46,7 +46,7 @@
 #define _FT5436     0x54360002
 #define _FT5526     0x55260002
 #define _FT5526I    0x5526B002
-#define _FT5446     0x54460402
+#define _FT5446     0x54460002
 #define _FT5346     0x53460002
 #define _FT5446I    0x5446B002
 #define _FT5346I    0x5346B002
